@@ -391,19 +391,191 @@ ggplot(data = diamonds) +
 
 #####################  3.8 Position Adjustments
 
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, colour = cut))
+
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = cut))
+
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+
+# Remember that geom_bar is a barplot of counts. By using fill = clarify, it's essentially
+# a combination of cut and clarity
+
+# I presume this is called a stacked bar chart. 
+
+ggplot(data = diamonds, mapping = aes(x = cut, fill = clarity)) + 
+  geom_bar(alpha = 1/5, position = "identity")
+
+
+ggplot(data = diamonds, mapping = aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+
+# Position fills make each bar the same height, and is focused on the proportions across
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+# Here, we've learnt about making stacked barcharts, broken up barcharts as well as the jitter function
+# Dodge function is quite powerful as well
+
+# To learn more about a position adjustment, look up the help page associated with each adjustment: 
+# ?position_dodge, ?position_fill, ?position_identity, ?position_jitter, and ?position_stack.
+
+
+
+# Exercises 3.8.1
+
+# 1. What is the problem with this plot? How could you improve it?
+
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_jitter()
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point()
+
+# Use jitter to get a better idea 
+
+
+# 2. What parameters to geom_jitter() control the amount of jittering?
+
+?geom_jitter
+# key parameters are width and height
+
+# 3. Compare and contrast geom_jitter() with geom_count().
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_count()
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_jitter()
+
+# jitter uses random noise to space apart your data points, count uses the size of the datapoint
+# to give you how many it should be
+
+
+# 4. What’s the default position adjustment for geom_boxplot()? 
+# Create a visualisation of the mpg dataset that demonstrates it.
+
+ggplot(data=mpg, mapping = aes(x=class, y=cty)) + 
+  geom_boxplot(position="dodge")
+
+
+# The default is dodge
 
 
 
 
+# 3.9 Coordinate Systems
+
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot()
+
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot() +
+  coord_flip()
+# Function basically flips whatever you want
+
+nz <- map_data("nz")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+
+
+bar <- ggplot(data = diamonds) + 
+  geom_bar(
+    mapping = aes(x = cut, fill = cut), 
+    show.legend = FALSE,
+    width = 1
+  ) + 
+  theme(aspect.ratio = 1) +
+  labs(x = NULL, y = NULL)
+
+bar + coord_flip()
+bar + coord_polar()
 
 
 
+# 3.9.1 Exercises
+
+# 1. Turn a stacked bar chart into a pie chart using coord_polar().
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity)) + 
+  coord_polar()
+
+# 2. What does labs() do? Read the documentation.
+?labs()
+# It's the labels for your specific plot
+
+
+# 3. What’s the difference between coord_quickmap() and coord_map()?
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_map()
+
+?coord_map()
+
+# Basically, quickmap is a short cut approximation, requiring significantly less computational power
 
 
 
+# 4. What does the plot below tell you about the relationship between city and highway mpg? 
+# Why is coord_fixed() important? What does geom_abline() do?
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point() + 
+  geom_abline() +
+  coord_fixed()
+
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point() + 
+  geom_abline()
+
+# In general, if the number of city miles per gallon increases,
+# then the highway miles per gallon rises as well
+
+# Coord fixed is important as is fixes the aspect ratio, allowing for comparisons across plots
+# Abline draws a linear to make it easier for determining the linear effect
+
+?coord_fixed()
+
+# 3.10 The layered grammar of graphics
 
 
 
+# Basically, there are 7 key parameters to consider
+# The data
+# The variables
+# What kind of plot
+# The stat
+# The position
+# Coordination functions
+# Faceting or not
 
 
 
