@@ -218,9 +218,107 @@ mutate(flights_sml,
 
 # 5.5.2 Exercises
 
+
+# 1. Currently dep_time and sched_dep_time are convenient to look at, 
+# but hard to compute with because they’re not really continuous numbers. 
+# Convert them to a more convenient representation of number of minutes since midnight.
+
+# NOTE
+# There are no flights at midnight, hence we can dep_time NA with 0
+# There is no missing data in sched_dep_time, but missing data exists in dep_time
+# Likely due to cancelled or postponed flights
+
+difftime(as.POSIXct('0334', format = '%H%M'), as.POSIXct('0000', format = '%H%M'), units = 'min') 
+
+
+diff_in_time <- function(input){
+        input = formatC(sprintf("%04d", input), width=4, flag="0")
+        as.double(difftime(as.POSIXct(input, format = '%H%M'), as.POSIXct('0000', format = '%H%M'), units = 'min')) 
+}
+
+flights$sched_dep_time_min <- lapply(flights$sched_dep_time, diff_in_time)
+
+flights$dep_time[is.na(flights$dep_time)] <- 0
+
+flights$dep_time_min <- lapply(flights$dep_time, diff_in_time)
+
+
+
+# 2. Compare air_time with arr_time - dep_time. 
+# What do you expect to see? What do you see? What do you need to do to fix it?
+
+# Naturally, I would expect arr_time - dep_time = air_time
+# However,upon a cursory inspection, that's not the case.
+# Hypothesis that 
+# a. Due to the change in timezones
+# b. Due to data entry problems
+# c. Due to time needed for taxing. 
+
+# However, in this case, I can only test for one specific scenario - A.
+
+# In order to test for this, i would subset flights from a particular timezone. 
+
+
+flights %>% count(dest, origin)
+
+# Using ABQ - JFK
+# ABQ is gmt-6, JFK is gmt-4
+# Hence time difference should be two hours
+
+filtered_jfk_abq <- filter(flights, dest == "ABQ", origin=="JFK")
+a <- select(filtered_jfk_abq, origin, dest, arr_time, dep_time, air_time)
+
+a$diff = a$arr_time - a$dep_time
+
+a$diff_air_time_diff <- a$air_time - a$diff
+
+# Since the differences are very volatile, it's clear that it's not related to the timezone differences
+
+
+
+
+# 3. Compare dep_time, sched_dep_time, and dep_delay. 
+# How would you expect those three numbers to be related?
+
+select(flights, dep_time, sched_dep_time, dep_delay)
+
+# By right, sched_dep_time + dep_delay = dep_time
+flights$test <- flights$dep_time - flights$sched_dep_time
+flights$test_diff <- flights$test - flights$dep_delay
+
+flights$test_diff
+select(flights, sched_dep_time, dep_delay, dep_time, test, test_diff)
+        
+
+# 4. Find the 10 most delayed flights using a ranking function. 
+# How do you want to handle ties? Carefully read the documentation for min_rank().
+?min_rank
+
+# to find the most delayed flights, we only use arr_delay, cause anytime at the scheduled
+# delay is made up for
+
+flights$rank <- min_rank(desc(flights$arr_delay))
+
+select(filter(flights, flights$rank < 10),rank, arr_delay)
+
+flights
+
+# Take note of the difference between min_rank and dense rank and how they deal with
+# ties
+
+# 5. What does 1:3 + 1:10 return? Why?
 1:3 + 1:10
+1:3
+# you are trying to add the vector [1,2,3] and [1,2,3...,9,10]
+# Hence, a length error is thrown
+
+        
+# 6. What trigonometric functions does R provide?
+# http://www.endmemo.com/program/R/trig.php
 
 
+
+# 
 
 
 
