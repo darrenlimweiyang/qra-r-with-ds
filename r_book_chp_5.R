@@ -1,7 +1,7 @@
 
 library(nycflights13)
 library(tidyverse)
-
+library(ggplot2)
 ?flights
 
 # What is flights?
@@ -318,7 +318,127 @@ flights
 
 
 
-# 
+# 5.6 Grouped summaries with summarise()
+
+
+
+# 5.6.7 Exercises
+
+# 1. Brainstorm at least 5 different ways to assess the typical delay 
+# characteristics of a group of flights. Consider the following scenarios:
+
+# a. A flight is 15 minutes early 50% of the time, 
+# and 15 minutes late 50% of the time.
+
+
+# b. A flight is always 10 minutes late.
+
+# c. A flight is 30 minutes early 50% of the time, and 30 minutes late 50% of the time.
+
+# d. 99% of the time a flight is on time. 1% of the time it’s 2 hours late.
+
+
+# Question: Which is more important: arrival delay or departure delay?
+# arrival delay. 
+# Departure delay is fine as long as time is made up, no issue. 
+        
+
+# 2. Come up with another approach that will give you the same output 
+# as not_cancelled %>% count(dest) and not_cancelled %>% count(tailnum, wt = distance) 
+# (without using count()).
+
+not_cancelled <- flights %>% 
+        filter(!is.na(dep_delay), !is.na(arr_delay))
+
+not_cancelled %>% count(dest)
+
+table(not_cancelled$dest) # alternative that works
+
+
+not_cancelled %>% count(tailnum, wt = distance)
+
+
+aggregate(not_cancelled$distance, by=list(not_cancelled$tailnum), FUN=sum)
+
+# Alternative
+
+
+
+# 3. Our definition of cancelled flights (is.na(dep_delay) | is.na(arr_delay) ) 
+# is slightly suboptimal. Why? Which is the most important column?
+
+# All flights that are is.na(dep_delay) will be is.na(arr_delay)
+# The most important column is dep_time
+
+
+        
+
+# 4. Look at the number of cancelled flights per day.
+# Is there a pattern? 
+# Is the proportion of cancelled flights related to the average delay?
+
+cancelled_flights <- filter(flights, is.na(dep_time))
+cancelled <- cancelled_flights %>% 
+        count(month,day)
+
+all_flights <- flights %>%
+        count(month,day)
+
+combined_df <- all_flights %>% left_join(cancelled, by=c("month", "day"))
+
+combined_df$proportion <- (combined_df$n.y / combined_df$n.x)*100        
+
+by_day <- group_by(flights, month, day)
+avg_delay <- summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+
+final_df <- combined_df %>% left_join(avg_delay, by=c("month", "day"))
+
+ggplot(data=final_df) + geom_point(mapping = aes(y=proportion, x=delay))
+# Somewhat linear relationship
+
+filter(final_df, proportion > 50)
+
+# https://en.wikipedia.org/wiki/Early_February_2013_North_American_blizzard
+# 1/2 of all flights cancelled due to Blizzard in NA
+
+
+
+
+# 5. Which carrier has the worst delays? Challenge: 
+# can you disentangle the effects of bad airports vs. bad carriers? 
+# Why/why not? (Hint: think about flights %>% group_by(carrier, dest)
+# %>% summarise(n()))
+
+# To find out which carriers has the worst delays, we can
+# group by carriers and obtain average delay per carrier
+
+by_car <- group_by(flights, carrier)
+avg_delay <- summarise(by_car, delay = mean(dep_delay, na.rm = TRUE))
+arrange(avg_delay, delay)
+
+# Can I disentagle effects of bad airports vs bad carriers
+df_flights_delay_by_carrier_airport <- flights %>%
+        group_by(carrier, dest) %>%
+        summarise(delay=mean(arr_delay, na.rm=TRUE)) %>%
+        left_join(flights %>% 
+                          group_by(carrier, dest) %>% 
+                          summarise(n()), by=c("carrier", "dest"))
+
+arrange(df_flights_delay_by_carrier_airport, dest)
+
+
+
+
+# 6. What does the sort argument to count() do. When might you use it?
+?count()
+# Whether you wanna sort the output dataframe
+
+
+
+
+
+
+
 
 
 
