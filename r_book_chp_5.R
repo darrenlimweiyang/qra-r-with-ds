@@ -436,8 +436,129 @@ arrange(df_flights_delay_by_carrier_airport, dest)
 
 
 
+# 5.7 Grouped Mutates (and filters)
 
 
+
+# 1. Refer back to the lists of useful mutate and filtering functions. 
+# Describe how each operation changes when you combine it with grouping.
+# <SKIP>
+
+
+# 2. Which plane (tailnum) has the worst on-time record?
+# What's on-time -  proportion of flights delayed or cancelled
+# Highest Average Arrival Delay
+
+arrange(flights %>% 
+        group_by(tailnum) %>%
+        summarise(delay=mean(arr_delay, na.rm=TRUE)), desc(delay))
+
+# Second way is the proportion of flights delayed
+
+
+        
+# 3. What time of day should you fly if you want to avoid delays 
+# as much as possible?
+cancelled_flights <- filter(flights, is.na(dep_time))
+cancelled <- cancelled_flights %>% 
+        count(month,day)
+
+flights %>% 
+        group_by(hour) %>%
+        summarise(delay=mean(arr_delay, na.rm=TRUE)) %>%
+        left_join(flights %>% 
+                          count(hour), by="hour")
+        
+
+
+# 4. For each destination, compute the total minutes of delay. 
+# For each flight, 
+# compute the proportion of the total delay for its destination.
+
+filter(flights, arr_delay>0) %>%
+        group_by(dest) %>%
+        summarise(total_delay=sum(arr_delay, na.rm=TRUE))
+
+delays_sum <- filter(select(flights, arr_delay, flight, dest), arr_delay > 0) %>%
+        left_join(filter(flights, arr_delay>0) %>%
+        group_by(dest) %>%
+        summarise(total_delay=sum(arr_delay, na.rm=TRUE)),by="dest")
+
+delays_sum$prop <- (delays_sum$arr_delay / delays_sum$total_delay)*100
+arrange(delays_sum, desc(prop))
+
+
+
+
+# 5. Delays are typically temporally correlated:
+# even once the problem that caused the initial delay has been resolved, 
+# later flights are delayed to allow earlier flights to leave. 
+# Using lag(), 
+# explore how the delay of a flight is related to the delay of the 
+# immediately preceding flight.
+
+select(arrange(flights, year, month, day, origin, dep_time, sched_dep_time),
+       month, day, dep_time, sched_dep_time, dep_delay, origin)
+
+flights
+
+lagged_delays <- flights %>%
+        arrange(origin, month, day, dep_time) %>%
+        group_by(origin) %>%
+        mutate(dep_delay_lag = lag(dep_delay)) %>%
+        filter(!is.na(dep_delay), !is.na(dep_delay_lag))
+
+lagged_delays %>%
+        group_by(dep_delay_lag) %>%
+        summarise(dep_delay_mean = mean(dep_delay)) %>%
+        ggplot(aes(y=dep_delay_mean, x= dep_delay_lag)) + 
+        geom_point() + 
+        scale_x_continuous(breaks = seq(0, 1500, by=120)) + 
+        labs(y = "Dearture Delay", x = "Previous Departure Delay")
+
+# 6. Look at each destination. 
+# Can you find flights that are suspiciously fast? 
+# (i.e. flights that represent a potential data entry error). 
+# Compute the air time of a flight relative to the 
+# shortest flight to that destination. Which flights were most delayed in the air?
+
+
+flights %>% 
+        group_by(dest) %>%
+        summarise(mean(air_time, na.rm=TRUE))
+
+
+# 7. Find all destinations that are flown by at least two carriers. 
+# Use that information to rank the carriers.
+
+flights %>%
+        group_by(dest) %>%
+        filter(n_distinct(carrier) > 2) %>%
+        group_by(carrier, dest) %>%
+        summarise(n=n_distinct(dest)) %>%
+        count(carrier) %>%
+        arrange(desc(nn))
+
+        
+
+
+# 8. For each plane, 
+# count the number of flights before the first delay of greater than 1 hour.
+
+flights %>% 
+        select(tailnum, month, day, dep_delay, arr_delay)
+        
+
+ranked_df <- select(flights %>%
+        group_by(tailnum) %>%
+        mutate(my_ranks = order(month,day)), tailnum, month, day, dep_delay, arr_delay, my_ranks)
+                
+
+View(filter(ranked_df, dep_delay >= 60) %>%
+        group_by(tailnum) %>%
+        slice(which.min(my_ranks)))
+
+# Hence this dataframe gives me the number of flights (n-1) before the first delay > 60
 
 
 
