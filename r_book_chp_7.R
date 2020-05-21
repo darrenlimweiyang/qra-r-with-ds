@@ -2,6 +2,8 @@
 library(nycflights13)
 library(tidyverse)
 library(ggplot2)
+library(ggstance)
+library(lvplot)
 
 
 # What type of variation occurs within my variables?
@@ -178,16 +180,67 @@ ggplot(data = diamonds, mapping = aes(x = cut, y = price)) +
 # 1. Use what you’ve learned to improve the visualisation of the 
 # departure times of cancelled vs. non-cancelled flights.
 
+ggplot(flights) +
+        geom_bar(mapping=aes(x=))
+
+flights_2 = flights %>%
+        mutate(cancelled = if_else(is.na(dep_time), "Cancelled", "Not Cancelled")) %>%
+        mutate(hour = sched_dep_time %/% 100)
+
+
+ggplot(data = flights_2, aes(hour, ..count..)) + 
+        geom_bar(mapping = aes(fill = cancelled))
+
+
+ggplot(data = flights_2, mapping = aes(x = cancelled, y = hour)) +
+        geom_boxplot()
+
+
 # 2. What variable in the diamonds dataset is most important for 
 # predicting the price of a diamond? How is that variable correlated with cut? 
 # Why does the combination of those two relationships 
 # lead to lower quality diamonds being more expensive?
 
-        
-# 3. Install the ggstance package, and create a horizontal boxplot. 
+ggplot(data = diamonds, mapping = aes(x = price)) + 
+        geom_freqpoly(mapping = aes(colour = cut), binwidth = 500)
+
+ggplot(data = diamonds, mapping = aes(x = price, y = ..density..)) + 
+        geom_freqpoly(mapping = aes(colour = cut), binwidth = 500)
+
+ggplot(data=diamonds, mapping=aes(x=color, y=price)) + 
+        geom_boxplot()
+
+ggplot(data=diamonds, mapping=aes(x=clarity, y=price)) + 
+        geom_boxplot()
+
+
+ggplot(data=diamonds, mapping=aes(x=depth, y=price)) + 
+        geom_point()
+ggplot(data=diamonds, mapping=aes(x=table, y=price)) + 
+        geom_point()
+ggplot(data=diamonds, mapping=aes(x=x, y=price)) + 
+        geom_point()
+ggplot(data=diamonds, mapping=aes(x=y, y=price)) + 
+        geom_point()
+ggplot(data=diamonds, mapping=aes(x=z, y=price)) + 
+        geom_point()
+
+ggplot(data=diamonds, mapping=aes(x=price, y=))
+# carat, cut, color, clarity, depth, table, price, x,y, z
+
+# Carat is the best
+
+
+
+ # 3. Install the ggstance package, and create a horizontal boxplot. 
 # How does this compare to using coord_flip()?
 
-        
+ggplot(data = mpg) +
+        geom_boxplot(mapping = aes(x = reorder(class, hwy, FUN = median), y = hwy)) +
+        coord_flip()
+
+??ggstance
+
         
 # 4. One problem with boxplots is that they were developed in an 
 # era of much smaller datasets and tend to display a prohibitively 
@@ -195,6 +248,10 @@ ggplot(data = diamonds, mapping = aes(x = cut, y = price)) +
 # problem is the letter value plot. Install the lvplot package, 
 # and try using geom_lv() to display the distribution of price vs cut. 
 # What do you learn? How do you interpret the plots?
+
+ggplot(diamonds, aes(x=price,y=cut)) + 
+        geom_lv()
+
         
 # 5. Compare and contrast geom_violin() with a facetted geom_histogram(), 
 # or a coloured geom_freqpoly(). What are the pros and cons of each method?
